@@ -1,0 +1,360 @@
+// Prisma Schema for Jangkriknet Full-Stack CMS & E-Commerce
+// Supports PostgreSQL (default for production/docker) and SQLite (for zero-setup local dev)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------
+// 1. AUTHENTICATION & USERS
+// ----------------------------------------------------
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("ADMIN") // ADMIN, STAFF
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ----------------------------------------------------
+// 2. SITE & APPEARANCE SETTINGS (CMS)
+// ----------------------------------------------------
+model SiteSetting {
+  id               String   @id @default("default")
+  companyName      String   @default("Jangkriknet")
+  tagline          String   @default("Solusi Digital & Produk Unggulan Indonesia")
+  logoUrl          String?  @default("")
+  faviconUrl       String?  @default("")
+  shortDescription String   @default("Perusahaan penyedia produk berkualitas tinggi dengan pelayanan terpercaya dan profesional.")
+  aboutText        String   @default("Jangkriknet didirikan dengan komitmen untuk memberikan produk dan layanan terbaik bagi seluruh masyarakat Indonesia.")
+  
+  // Kontak
+  address          String   @default("Jl. Merdeka Raya No. 45, Jakarta Pusat")
+  city             String   @default("Jakarta")
+  phone            String   @default("+62 21 555 1234")
+  whatsappNumber   String   @default("6281234567890")
+  whatsappTemplate String   @default("Halo [NAMA TOKO],\n\nSaya ingin melakukan pemesanan:\n\nProduk:\n[PRODUK]\n\nTotal: [TOTAL]\nNama: [NAMA]\nAlamat: [ALAMAT]\nCatatan: [CATATAN]")
+  email            String   @default("info@jangkriknet.com")
+  mapsEmbedUrl     String   @default("https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3966.521260322283!2d106.8195613507864!3d-6.194741395493371!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69f5390917b759%3A0x6b45e67356080477!2sMonumen%20Nasional!5e0!3m2!1sid!2sid!4v1620000000000!5m2!1sid!2sid")
+  
+  // Social Media
+  facebookUrl      String?  @default("https://facebook.com")
+  instagramUrl     String?  @default("https://instagram.com")
+  tiktokUrl        String?  @default("https://tiktok.com")
+  youtubeUrl       String?  @default("https://youtube.com")
+  linkedinUrl      String?  @default("https://linkedin.com")
+
+  // Footer & Legal
+  footerText       String   @default("Solusi tepat untuk kebutuhan produk dan teknologi terpercaya.")
+  copyrightText    String   @default("© 2026 Jangkriknet. All Rights Reserved.")
+
+  // SEO Global
+  metaTitle        String   @default("Jangkriknet - Official Company Profile & Store")
+  metaDescription  String   @default("Website resmi Jangkriknet. Temukan informasi perusahaan, katalog produk unggulan, dan pemesanan mudah.")
+  metaKeywords     String   @default("jangkriknet, toko online, produk unggulan, company profile, e-commerce indonesia")
+  ogImageUrl       String?  @default("")
+
+  updatedAt        DateTime @updatedAt
+}
+
+model ThemeSetting {
+  id              String   @id @default("default")
+  primaryColor    String   @default("#1d4ed8") // Blue 700
+  secondaryColor  String   @default("#475569") // Slate 600
+  accentColor     String   @default("#f59e0b") // Amber 500
+  backgroundColor String   @default("#ffffff")
+  textColor       String   @default("#0f172a")
+  headingFont     String   @default("Inter")
+  bodyFont        String   @default("Inter")
+  borderRadius    String   @default("rounded-lg") // rounded-none, rounded-sm, rounded-md, rounded-lg, rounded-full
+  buttonStyle     String   @default("solid") // solid, outline, rounded
+  layout          String   @default("full") // boxed, full
+  headerStyle     String   @default("modern") // standard, modern, minimal
+  updatedAt       DateTime @updatedAt
+}
+
+model CompanyProfile {
+  id             String   @id @default("default")
+  history        String   @default("Berdiri sejak tahun 2018, perusahaan terus berinovasi dan berkembang menjadi salah satu penyedia produk dan layanan paling dipercaya di Indonesia.")
+  vision         String   @default("Menjadi perusahaan terdepan dan terpercaya di tingkat nasional dalam menyediakan produk inovatif dan berkualitas tinggi.")
+  mission        String   @default("1. Memberikan kepuasan maksimal kepada pelanggan melalui produk bermutu.\n2. Mengedepankan integritas, profesionalisme, dan teknologi modern.\n3. Memberdayakan masyarakat dan mitra kerja lokal.")
+  valuesJson     String   @default("[\"Integritas\",\"Inovasi Berkelanjutan\",\"Kepuasan Pelanggan\",\"Kerja Sama Tim\"]")
+  advantagesJson String   @default("[{\"title\":\"Kualitas Terjamin\",\"desc\":\"Setiap produk melewati uji mutu ketat sebelum dikirim.\"},{\"title\":\"Pengiriman Cepat\",\"desc\":\"Didukung logistik profesional menjangkau seluruh nusantara.\"},{\"title\":\"Layanan 24/7\",\"desc\":\"Dukungan tim customer care responsif via WhatsApp dan email.\"}]")
+  teamJson       String   @default("[{\"name\":\"Ahmad Pratama\",\"role\":\"Direktur Utama\",\"avatar\":\"https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400\"},{\"name\":\"Siti Nurhaliza\",\"role\":\"Manajer Operasional\",\"avatar\":\"https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400\"}]")
+  certificationsJson String @default("[\"ISO 9001:2015 Quality Management\",\"Sertifikat Mutu Standar Nasional Indonesia\"]")
+  legalitiesJson String   @default("[{\"label\":\"NIB\",\"value\":\"0123456789012\"},{\"label\":\"NPWP\",\"value\":\"01.234.567.8-012.000\"},{\"label\":\"SK Kemenkumham\",\"value\":\"AHU-0012345.AH.01.01.TAHUN 2020\"}]")
+  updatedAt      DateTime @updatedAt
+}
+
+// ----------------------------------------------------
+// 3. NAVIGATION & MENUS
+// ----------------------------------------------------
+model Navigation {
+  id        String   @id @default(cuid())
+  label     String
+  url       String
+  order     Int      @default(0)
+  parentId  String?
+  target    String   @default("_self")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ----------------------------------------------------
+// 4. HOMEPAGE SECTIONS (VISUAL BUILDER)
+// ----------------------------------------------------
+model Section {
+  id          String   @id @default(cuid())
+  type        String   // HERO, ABOUT, ADVANTAGES, FEATURED_PRODUCTS, CATEGORIES, PROMO_BANNER, STATS, TESTIMONIALS, GALLERY, FAQ, CTA, CONTACT, CUSTOM_HTML
+  title       String?
+  subtitle    String?
+  content     String?  // JSON stringified configuration (e.g. buttons, images, custom texts, styles)
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ----------------------------------------------------
+// 5. PRODUCTS & E-COMMERCE
+// ----------------------------------------------------
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  imageUrl    String?
+  order       Int       @default(0)
+  isActive    Boolean   @default(true)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Brand {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  logoUrl   String?
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id            String                 @id @default(cuid())
+  sku           String                 @unique
+  name          String
+  slug          String                 @unique
+  shortDesc     String?
+  longDesc      String?
+  price         Float
+  discountPrice Float?
+  stock         Int                    @default(0)
+  weight        Float?                 @default(500) // gram
+  dimensions    String?                // misal: 20x10x5 cm
+  categoryId    String?
+  category      Category?              @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  brandId       String?
+  brand         Brand?                 @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  isFeatured    Boolean                @default(false)
+  isActive      Boolean                @default(true)
+  mainImage     String?
+  seoTitle      String?
+  seoDesc       String?
+  images        ProductImage[]
+  specs         ProductSpecification[]
+  orderItems    OrderItem[]
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  imageUrl  String
+  isPrimary Boolean  @default(false)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model ProductSpecification {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  key       String  // misal: Warna, Bahan, Daya
+  value     String  // misal: Hitam, Aluminium, 45 Watt
+  order     Int     @default(0)
+}
+
+// ----------------------------------------------------
+// 6. ORDERS & TRANSACTIONS
+// ----------------------------------------------------
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  email     String?
+  address   String?
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  customerId      String?
+  customer        Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerName    String
+  customerPhone   String
+  customerEmail   String?
+  shippingAddress String
+  city            String
+  district        String?
+  postalCode      String?
+  customerNotes   String?
+  paymentMethod   String      @default("BANK_TRANSFER") // BANK_TRANSFER, COD, WHATSAPP
+  status          String      @default("NEW") // NEW, PROCESSING, SHIPPED, COMPLETED, CANCELLED
+  subtotal        Float
+  total           Float
+  items           OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productName String
+  price       Float
+  quantity    Int
+  subtotal    Float
+}
+
+// ----------------------------------------------------
+// 7. CONTENT & MARKETING MODULES
+// ----------------------------------------------------
+model Banner {
+  id         String   @id @default(cuid())
+  title      String
+  subtitle   String?
+  imageUrl   String
+  linkUrl    String?
+  buttonText String?  @default("Lihat Selengkapnya")
+  order      Int      @default(0)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Slider {
+  id         String   @id @default(cuid())
+  title      String
+  subtitle   String?
+  imageUrl   String
+  linkUrl    String?
+  buttonText String?  @default("Beli Sekarang")
+  order      Int      @default(0)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  name      String
+  role      String?  @default("Pelanggan Setia")
+  company   String?
+  avatarUrl String?
+  content   String
+  rating    Int      @default(5)
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Gallery {
+  id        String   @id @default(cuid())
+  title     String
+  imageUrl  String
+  category  String?  @default("Kegiatan")
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Faq {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Dynamic Pages (Page Builder)
+model Page {
+  id            String   @id @default(cuid())
+  title         String
+  slug          String   @unique
+  content       String   // HTML or markdown content
+  featuredImage String?
+  seoTitle      String?
+  seoDesc       String?
+  isPublished   Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Blog / Articles
+model BlogCategory {
+  id        String     @id @default(cuid())
+  name      String
+  slug      String     @unique
+  posts     BlogPost[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model BlogPost {
+  id            String        @id @default(cuid())
+  title         String
+  slug          String        @unique
+  summary       String?
+  content       String
+  featuredImage String?
+  author        String        @default("Admin")
+  categoryId    String?
+  category      BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  isPublished   Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+// Media Library
+model Media {
+  id           String   @id @default(cuid())
+  filename     String
+  originalName String
+  url          String
+  mimeType     String
+  size         Int
+  createdAt    DateTime @default(now())
+}
