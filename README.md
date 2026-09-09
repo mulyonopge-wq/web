@@ -1,4 +1,4 @@
-# Jangkriknet - Modern Full-Stack Company Profile, E-Commerce & Visual CMS
+# Modern Full-Stack Company Profile, E-Commerce & Visual CMS
 
 Aplikasi web modern full-stack yang mengintegrasikan **Company Profile Perusahaan**, **Katalog & Toko Online (E-Commerce & WhatsApp Order)**, serta **Visual CMS / Admin Panel** lengkap.
 
