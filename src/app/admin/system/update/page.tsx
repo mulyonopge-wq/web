@@ -153,8 +153,8 @@ export default function GitUpdatePage() {
   };
 
   // Eksekusi Pull Update
-  const handlePullUpdates = async (forceParam?: boolean) => {
-    const isForced = forceParam !== undefined ? forceParam : forcePull;
+  const handlePullUpdates = async (forceParam?: boolean | React.MouseEvent) => {
+    const isForced = typeof forceParam === 'boolean' ? forceParam : forcePull;
     const confirmMsg =
       'PERHATIAN: Aplikasi akan menarik kode terbaru dari GitHub dan memperbarui sistem.\n\n' +
       `Branch: ${status?.branch || 'main'}\n` +
@@ -447,7 +447,7 @@ export default function GitUpdatePage() {
                 </button>
 
                 <button
-                  onClick={handlePullUpdates}
+                  onClick={() => handlePullUpdates()}
                   disabled={pulling}
                   className="w-full py-2.5 px-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold text-xs rounded-xl shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
                 >
