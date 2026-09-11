@@ -18,6 +18,7 @@ interface MediaPickerModalProps {
   onClose: () => void;
   onSelect: (url: string) => void;
   title?: string;
+  initialUrl?: string;
 }
 
 export default function MediaPickerModal({
@@ -25,6 +26,7 @@ export default function MediaPickerModal({
   onClose,
   onSelect,
   title = 'Pilih atau Upload Gambar',
+  initialUrl,
 }: MediaPickerModalProps) {
   const [mediaList, setMediaList] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -35,16 +37,35 @@ export default function MediaPickerModal({
 
   useEffect(() => {
     if (isOpen) {
+      if (initialUrl) {
+        setSelectedUrl(initialUrl);
+      } else {
+        setSelectedUrl('');
+      }
       fetchMedia();
     }
-  }, [isOpen]);
+  }, [isOpen, initialUrl]);
 
-  const fetchMedia = async () => {
+  const fetchMedia = async (forceSelectUrl?: string) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/media?limit=30');
+      const res = await fetch('/api/media?limit=50');
       const data = await res.json();
-      if (data.media) setMediaList(data.media);
+      if (data.media) {
+        setMediaList(data.media);
+
+        // Auto-select latest image by default if nothing or invalid is selected
+        if (data.media.length > 0) {
+          if (forceSelectUrl) {
+            setSelectedUrl(forceSelectUrl);
+          } else if (initialUrl && data.media.some((m: MediaItem) => m.url === initialUrl)) {
+            setSelectedUrl(initialUrl);
+          } else if (!selectedUrl || !data.media.some((m: MediaItem) => m.url === selectedUrl)) {
+            // Auto select latest image (first item in array)
+            setSelectedUrl(data.media[0].url);
+          }
+        }
+      }
     } catch (e) {
       console.error('Failed to load media', e);
     } finally {
@@ -68,7 +89,7 @@ export default function MediaPickerModal({
       const data = await res.json();
       if (data.success && data.url) {
         setSelectedUrl(data.url);
-        await fetchMedia();
+        await fetchMedia(data.url);
         setActiveTab('library');
       } else {
         alert(data.error || 'Gagal mengunggah file');
@@ -101,7 +122,7 @@ export default function MediaPickerModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+            className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -116,7 +137,7 @@ export default function MediaPickerModal({
               e.stopPropagation();
               setActiveTab('library');
             }}
-            className={`py-3 text-sm font-medium border-b-2 transition-colors ${
+            className={`py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
               activeTab === 'library'
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -131,7 +152,7 @@ export default function MediaPickerModal({
               e.stopPropagation();
               setActiveTab('upload');
             }}
-            className={`py-3 text-sm font-medium border-b-2 transition-colors ${
+            className={`py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
               activeTab === 'upload'
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -146,7 +167,7 @@ export default function MediaPickerModal({
               e.stopPropagation();
               setActiveTab('url');
             }}
-            className={`py-3 text-sm font-medium border-b-2 transition-colors ${
+            className={`py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
               activeTab === 'url'
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -173,19 +194,30 @@ export default function MediaPickerModal({
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {mediaList.map((item) => {
+                  {mediaList.map((item, index) => {
                     const isSelected = selectedUrl === item.url;
                     const isVideo = isVideoUrl(item.url) || item.mimeType?.startsWith('video/');
                     return (
                       <div
                         key={item.id}
                         onClick={() => setSelectedUrl(item.url)}
+                        onDoubleClick={() => {
+                          onSelect(item.url);
+                          onClose();
+                        }}
                         className={`group relative rounded-xl overflow-hidden border-2 cursor-pointer aspect-square bg-slate-900 transition-all ${
                           isSelected
                             ? 'border-blue-600 ring-4 ring-blue-50'
                             : 'border-slate-200 hover:border-slate-300'
                         }`}
+                        title="Klik untuk memilih, klik 2x untuk langsung gunakan"
                       >
+                        {index === 0 && (
+                          <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-blue-600/90 backdrop-blur-xs text-white text-[10px] font-bold shadow-sm z-10">
+                            Terbaru
+                          </div>
+                        )}
+
                         {isVideo ? (
                           <div className="w-full h-full relative flex items-center justify-center bg-slate-950">
                             <video
@@ -194,7 +226,7 @@ export default function MediaPickerModal({
                               muted
                               playsInline
                             />
-                            <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/70 text-white text-[10px] font-bold flex items-center gap-1">
+                            <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-black/70 text-white text-[10px] font-bold flex items-center gap-1 z-10">
                               <Film className="w-3 h-3 text-amber-400" />
                               <span>VIDEO</span>
                             </div>
@@ -211,13 +243,13 @@ export default function MediaPickerModal({
                         )}
 
                         {isSelected && (
-                          <div className="absolute inset-0 bg-blue-600/20 flex items-center justify-center">
+                          <div className="absolute inset-0 bg-blue-600/20 flex items-center justify-center z-10">
                             <div className="w-7 h-7 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg">
                               <Check className="w-4 h-4 stroke-[3]" />
                             </div>
                           </div>
                         )}
-                        <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-10">
                           <p className="text-white text-xs truncate">{item.originalName}</p>
                         </div>
                       </div>
@@ -255,6 +287,9 @@ export default function MediaPickerModal({
                 <p className="text-xs text-slate-400 max-w-sm">
                   Format yang didukung: JPG, PNG, WebP, MP4, WebM (Maks. 50MB).
                 </p>
+                <span className="mt-4 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold shadow-sm hover:bg-blue-700 transition-colors">
+                  Pilih Berkas dari Komputer
+                </span>
               </label>
             </div>
           )}
@@ -290,16 +325,27 @@ export default function MediaPickerModal({
 
         {/* Footer */}
         <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/50">
-          <p className="text-xs text-slate-400 truncate max-w-xs">
-            {activeTab === 'url'
-              ? customUrl || 'Belum ada URL'
-              : selectedUrl || 'Belum ada gambar yang dipilih'}
-          </p>
+          <div className="flex items-center gap-2 text-xs truncate max-w-sm">
+            {activeTab === 'url' ? (
+              <span className="text-slate-500 truncate">{customUrl || 'Belum ada URL'}</span>
+            ) : selectedUrl ? (
+              <span className="text-emerald-700 font-medium truncate flex items-center gap-1.5">
+                <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                <span className="truncate">
+                  Terpilih:{' '}
+                  {mediaList.find((m) => m.url === selectedUrl)?.originalName || 'Gambar'}
+                  {mediaList[0]?.url === selectedUrl && ' (Terbaru)'}
+                </span>
+              </span>
+            ) : (
+              <span className="text-slate-400">Belum ada media</span>
+            )}
+          </div>
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 text-sm font-medium transition-colors"
+              className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 text-sm font-medium transition-colors cursor-pointer"
             >
               Batal
             </button>
@@ -307,7 +353,7 @@ export default function MediaPickerModal({
               type="button"
               onClick={handleConfirm}
               disabled={activeTab === 'url' ? !customUrl : !selectedUrl}
-              className="px-5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 text-sm font-medium shadow-md shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="px-5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 text-sm font-medium shadow-md shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
             >
               Pilih Gambar
             </button>
