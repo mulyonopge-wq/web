@@ -363,12 +363,22 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 <Link
                   href="/admin/blog"
                   className={`block px-3 py-2 rounded-lg font-medium transition-colors ${
-                    pathname.startsWith('/admin/blog')
+                    pathname === '/admin/blog'
                       ? 'bg-blue-600/20 text-blue-400'
                       : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                   }`}
                 >
                   Blog & Artikel
+                </Link>
+                <Link
+                  href="/admin/blog/categories"
+                  className={`block px-3 py-2 rounded-lg font-medium transition-colors ${
+                    pathname === '/admin/blog/categories'
+                      ? 'bg-blue-600/20 text-blue-400'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  }`}
+                >
+                  Kategori Blog
                 </Link>
               </div>
             )}

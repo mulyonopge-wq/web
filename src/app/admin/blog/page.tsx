@@ -10,6 +10,7 @@ import {
   ExternalLink,
   Image as ImageIcon,
   Loader2,
+  FolderTree,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import MediaPickerModal from '@/components/admin/MediaPickerModal';
@@ -119,6 +120,28 @@ export default function BlogAdminPage() {
     }
   };
 
+  const handleQuickAddCategory = async () => {
+    const name = window.prompt('Masukkan nama kategori baru:');
+    if (!name || !name.trim()) return;
+    try {
+      const res = await fetch('/api/blog/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok && data.category) {
+        toast.success(`Kategori "${data.category.name}" berhasil ditambahkan!`);
+        setCategories((prev) => [...prev, data.category]);
+        setForm((prev) => ({ ...prev, categoryId: data.category.id }));
+      } else {
+        toast.error(data.error || 'Gagal menambahkan kategori');
+      }
+    } catch (e) {
+      toast.error('Terjadi kesalahan jaringan');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -130,13 +153,27 @@ export default function BlogAdminPage() {
             Publikasikan tips teknologi, berita perusahaan, dan panduan untuk pengunjung
           </p>
         </div>
-        <button
-          onClick={openAdd}
-          className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl shadow-md shadow-blue-500/20 flex items-center gap-2 transition-all cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Tulis Artikel Baru</span>
-        </button>
+        <div className="flex items-center gap-2.5">
+          <Link
+            href="/admin/blog/categories"
+            className="px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs rounded-xl shadow-xs flex items-center gap-2 transition-all cursor-pointer"
+          >
+            <FolderTree className="w-4 h-4 text-purple-600" />
+            <span>Kelola Kategori</span>
+            {categories.length > 0 && (
+              <span className="px-1.5 py-0.5 rounded-md bg-purple-50 text-purple-700 text-[10px] font-bold">
+                {categories.length}
+              </span>
+            )}
+          </Link>
+          <button
+            onClick={openAdd}
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl shadow-md shadow-blue-500/20 flex items-center gap-2 transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tulis Artikel Baru</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -245,7 +282,16 @@ export default function BlogAdminPage() {
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 uppercase tracking-wider mb-1">Kategori</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-slate-700 uppercase tracking-wider">Kategori</label>
+                    <button
+                      type="button"
+                      onClick={handleQuickAddCategory}
+                      className="text-[11px] font-bold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                    >
+                      + Kategori Baru
+                    </button>
+                  </div>
                   <select
                     value={form.categoryId}
                     onChange={(e) => setForm({ ...form, categoryId: e.target.value })}

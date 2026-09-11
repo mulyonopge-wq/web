@@ -52,6 +52,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       '/admin/orders': 'Daftar Pesanan',
       '/admin/pages': 'Halaman Dinamis',
       '/admin/blog': 'Artikel & Berita',
+      '/admin/blog/categories': 'Kategori Blog',
       '/admin/content/testimonials': 'Testimoni',
       '/admin/content/faqs': 'FAQ Tanya Jawab',
       '/admin/media': 'Media Library',
