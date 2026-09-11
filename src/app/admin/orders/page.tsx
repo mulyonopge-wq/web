@@ -13,6 +13,7 @@ import {
   Loader2,
   AlertCircle,
   Filter,
+  Trash2,
 } from 'lucide-react';
 import { formatRupiah } from '@/lib/currency';
 import { useToast } from '@/components/ui/Toast';
@@ -51,6 +52,7 @@ export default function OrdersAdminPage() {
   const [search, setSearch] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<OrderItem | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -74,6 +76,13 @@ export default function OrdersAdminPage() {
   };
 
   const handleUpdateStatus = async (orderId: string, newStatus: string) => {
+    if (newStatus === 'CANCELLED') {
+      const confirmed = window.confirm(
+        'Yakin ingin membatalkan pesanan ini? Stok produk akan dikembalikan ke inventaris.'
+      );
+      if (!confirmed) return;
+    }
+
     setUpdating(true);
     try {
       const res = await fetch(`/api/orders/${orderId}`, {
@@ -83,7 +92,7 @@ export default function OrdersAdminPage() {
       });
       if (res.ok) {
         toast.success(`Status pesanan diubah menjadi: ${STATUS_MAP[newStatus]?.label || newStatus}`);
-        if (selectedOrder) {
+        if (selectedOrder && selectedOrder.id === orderId) {
           setSelectedOrder({ ...selectedOrder, status: newStatus });
         }
         await fetchOrders();
@@ -94,6 +103,35 @@ export default function OrdersAdminPage() {
       toast.error('Terjadi kesalahan jaringan');
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleDeleteOrder = async (orderId: string, orderNumber: string) => {
+    const confirmed = window.confirm(
+      `Apakah Anda yakin ingin menghapus pesanan #${orderNumber} secara permanen?\n\nJika pesanan belum dibatalkan, stok produk akan otomatis dikembalikan ke inventaris.`
+    );
+    if (!confirmed) return;
+
+    setDeletingId(orderId);
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        toast.success('Pesanan berhasil dihapus');
+        if (selectedOrder && selectedOrder.id === orderId) {
+          setSelectedOrder(null);
+        }
+        await fetchOrders();
+      } else {
+        toast.error(data.error || 'Gagal menghapus pesanan');
+      }
+    } catch (e) {
+      toast.error('Terjadi kesalahan jaringan saat menghapus pesanan');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -164,7 +202,7 @@ export default function OrdersAdminPage() {
                 <th className="py-3.5 px-4">Metode Bayar</th>
                 <th className="py-3.5 px-4">Total</th>
                 <th className="py-3.5 px-4">Status</th>
-                <th className="py-3.5 px-4 text-right">Rincian</th>
+                <th className="py-3.5 px-4 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -219,13 +257,41 @@ export default function OrdersAdminPage() {
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-right">
-                        <button
-                          onClick={() => setSelectedOrder(o)}
-                          className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:text-blue-600 hover:bg-slate-50 text-xs font-medium inline-flex items-center gap-1.5"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>Detail</span>
-                        </button>
+                        <div className="inline-flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => setSelectedOrder(o)}
+                            title="Lihat Rincian"
+                            className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:text-blue-600 hover:bg-slate-50 text-xs font-medium inline-flex items-center gap-1 cursor-pointer transition-colors"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Detail</span>
+                          </button>
+
+                          {o.status !== 'CANCELLED' && (
+                            <button
+                              onClick={() => handleUpdateStatus(o.id, 'CANCELLED')}
+                              disabled={updating}
+                              title="Batalkan Pesanan"
+                              className="px-2.5 py-1.5 rounded-lg border border-amber-200 text-amber-700 hover:bg-amber-50 text-xs font-medium inline-flex items-center gap-1 cursor-pointer transition-colors disabled:opacity-50"
+                            >
+                              <XCircle className="w-3.5 h-3.5 text-amber-600" />
+                              <span className="hidden sm:inline">Batalkan</span>
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => handleDeleteOrder(o.id, o.orderNumber)}
+                            disabled={deletingId === o.id}
+                            title="Hapus Pesanan Permanen"
+                            className="p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-medium inline-flex items-center cursor-pointer transition-colors disabled:opacity-50"
+                          >
+                            {deletingId === o.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -251,7 +317,7 @@ export default function OrdersAdminPage() {
               </div>
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100"
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer"
               >
                 ✕
               </button>
@@ -273,13 +339,13 @@ export default function OrdersAdminPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="text-slate-500 font-medium">Ubah Status:</span>
                   <select
                     disabled={updating}
                     value={selectedOrder.status}
                     onChange={(e) => handleUpdateStatus(selectedOrder.id, e.target.value)}
-                    className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-700 focus:outline-none"
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white font-semibold text-slate-700 focus:outline-none cursor-pointer"
                   >
                     <option value="NEW">Baru</option>
                     <option value="PROCESSING">Diproses</option>
@@ -287,6 +353,17 @@ export default function OrdersAdminPage() {
                     <option value="COMPLETED">Selesai</option>
                     <option value="CANCELLED">Dibatalkan</option>
                   </select>
+
+                  {selectedOrder.status !== 'CANCELLED' && (
+                    <button
+                      disabled={updating}
+                      onClick={() => handleUpdateStatus(selectedOrder.id, 'CANCELLED')}
+                      className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                      <span>Batalkan Pesanan</span>
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -349,10 +426,23 @@ export default function OrdersAdminPage() {
               </div>
             </div>
 
-            <div className="px-6 py-4 border-t border-slate-100 flex justify-end bg-slate-50/50">
+            <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <button
+                disabled={deletingId === selectedOrder.id}
+                onClick={() => handleDeleteOrder(selectedOrder.id, selectedOrder.orderNumber)}
+                className="px-4 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors disabled:opacity-50"
+              >
+                {deletingId === selectedOrder.id ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="w-3.5 h-3.5" />
+                )}
+                <span>Hapus Pesanan</span>
+              </button>
+
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="px-5 py-2 rounded-xl bg-slate-800 text-white text-xs font-semibold hover:bg-slate-900"
+                className="px-5 py-2 rounded-xl bg-slate-800 text-white text-xs font-semibold hover:bg-slate-900 cursor-pointer transition-colors"
               >
                 Tutup
               </button>
