@@ -169,8 +169,19 @@ export async function POST(req: NextRequest) {
       const runPrismaGenerate = body.runPrismaGenerate !== false;
       const runPrismaDbPush = body.runPrismaDbPush !== false;
       const runBuild = !!body.runBuild;
+      const forcePull = !!body.forcePull;
 
       const logs: Array<{ step: string; output: string; success: boolean }> = [];
+
+      // 0. Jika forcePull aktif atau ada konflik lokal, jalankan git reset --hard
+      if (forcePull) {
+        const resetRes = runCmd('git reset --hard HEAD');
+        logs.push({
+          step: 'git reset --hard HEAD (Bersihkan file lokal sebelum pull)',
+          output: resetRes.output || 'Reset selesai',
+          success: resetRes.success,
+        });
+      }
 
       // 1. Git pull
       const pullRes = runCmd(`git pull origin ${branch}`);

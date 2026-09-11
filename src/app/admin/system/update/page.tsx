@@ -64,7 +64,8 @@ export default function GitUpdatePage() {
   // Options
   const [runPrismaGenerate, setRunPrismaGenerate] = useState(true);
   const [runPrismaDbPush, setRunPrismaDbPush] = useState(true);
-  const [runBuild, setRunBuild] = useState(false);
+  const [runBuild, setRunBuild] = useState(true);
+  const [forcePull, setForcePull] = useState(false);
 
   // Console Logs
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -152,10 +153,12 @@ export default function GitUpdatePage() {
   };
 
   // Eksekusi Pull Update
-  const handlePullUpdates = async () => {
+  const handlePullUpdates = async (forceParam?: boolean) => {
+    const isForced = forceParam !== undefined ? forceParam : forcePull;
     const confirmMsg =
       'PERHATIAN: Aplikasi akan menarik kode terbaru dari GitHub dan memperbarui sistem.\n\n' +
       `Branch: ${status?.branch || 'main'}\n` +
+      `Bersihkan file lokal (Force Reset): ${isForced ? 'YA (Konflik ditimpa)' : 'Tidak'}\n` +
       `Prisma Generate: ${runPrismaGenerate ? 'Ya' : 'Tidak'}\n` +
       `Prisma DB Push: ${runPrismaDbPush ? 'Ya' : 'Tidak'}\n` +
       `Build Produksi: ${runBuild ? 'Ya' : 'Tidak'}\n\n` +
@@ -175,6 +178,7 @@ export default function GitUpdatePage() {
           runPrismaGenerate,
           runPrismaDbPush,
           runBuild,
+          forcePull: isForced,
         }),
       });
 
@@ -468,7 +472,7 @@ export default function GitUpdatePage() {
             <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
               Opsi Tindakan Pasca-Pull Otomatis:
             </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer">
                 <input
                   type="checkbox"
@@ -486,7 +490,7 @@ export default function GitUpdatePage() {
                   onChange={(e) => setRunPrismaDbPush(e.target.checked)}
                   className="rounded text-orange-600 focus:ring-orange-500 w-4 h-4"
                 />
-                <span>Jalankan `npx prisma db push` (Migrasi skema)</span>
+                <span>Jalankan `npx prisma db push`</span>
               </label>
 
               <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer">
@@ -497,6 +501,16 @@ export default function GitUpdatePage() {
                   className="rounded text-orange-600 focus:ring-orange-500 w-4 h-4"
                 />
                 <span>Jalankan `npm run build`</span>
+              </label>
+
+              <label className="flex items-center gap-2.5 text-xs text-rose-700 cursor-pointer font-medium">
+                <input
+                  type="checkbox"
+                  checked={forcePull}
+                  onChange={(e) => setForcePull(e.target.checked)}
+                  className="rounded text-rose-600 focus:ring-rose-500 w-4 h-4"
+                />
+                <span>Timpa & Bersihkan konflik lokal</span>
               </label>
             </div>
           </div>
@@ -517,6 +531,23 @@ export default function GitUpdatePage() {
                   <span>{copied ? 'Tersalin' : 'Salin Log'}</span>
                 </button>
               </div>
+
+              {/* Conflict recovery quick action */}
+              {logs.some((l) => !l.success && (l.output.includes('overwritten by merge') || l.output.includes('commit your changes'))) && (
+                <div className="p-4 bg-rose-950/80 border-b border-rose-800/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                  <span className="text-rose-200">
+                    ⚠️ Terdeteksi file lokal di server yang konflik. Klik tombol di kanan untuk menimpa dan menarik kode GitHub.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handlePullUpdates(true)}
+                    className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl flex items-center gap-2 transition-colors cursor-pointer whitespace-nowrap shadow-md shadow-rose-900/40"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Bersihkan Konflik & Pull Paksa</span>
+                  </button>
+                </div>
+              )}
 
               <div className="p-5 font-mono text-xs space-y-4 max-h-96 overflow-y-auto">
                 {logs.map((log, idx) => (
