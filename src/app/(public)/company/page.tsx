@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 
 import { getCompanyTitles } from '@/lib/companyTitles';
+import { getValidMapsUrl } from '@/lib/maps';
 
 export const revalidate = 0;
 
@@ -257,7 +258,7 @@ export default async function CompanyProfilePage() {
 
           <div className="w-full h-80 bg-slate-100">
             <iframe
-              src={site.mapsEmbedUrl}
+              src={getValidMapsUrl(site.mapsEmbedUrl, site.address, site.city)}
               width="100%"
               height="100%"
               style={{ border: 0 }}

@@ -1,6 +1,7 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
 import { MapPin, Phone, Mail, MessageCircle, Clock, Send } from 'lucide-react';
+import { getValidMapsUrl } from '@/lib/maps';
 
 export const revalidate = 0;
 
@@ -104,7 +105,7 @@ export default async function ContactPage() {
               </div>
               <div className="w-full h-96 bg-slate-100">
                 <iframe
-                  src={site.mapsEmbedUrl}
+                  src={getValidMapsUrl(site.mapsEmbedUrl, site.address, site.city)}
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}

@@ -38,6 +38,14 @@ export async function PUT(req: Request) {
     let updatedTheme = null;
 
     if (site) {
+      let cleanMapsEmbedUrl = site.mapsEmbedUrl;
+      if (typeof cleanMapsEmbedUrl === 'string' && cleanMapsEmbedUrl.includes('<iframe')) {
+        const match = cleanMapsEmbedUrl.match(/src=["']([^"']+)["']/i);
+        if (match && match[1]) {
+          cleanMapsEmbedUrl = match[1];
+        }
+      }
+
       updatedSite = await prisma.siteSetting.upsert({
         where: { id: 'default' },
         update: {
@@ -53,7 +61,7 @@ export async function PUT(req: Request) {
           whatsappNumber: site.whatsappNumber,
           whatsappTemplate: site.whatsappTemplate,
           email: site.email,
-          mapsEmbedUrl: site.mapsEmbedUrl,
+          mapsEmbedUrl: cleanMapsEmbedUrl,
           facebookUrl: site.facebookUrl,
           instagramUrl: site.instagramUrl,
           tiktokUrl: site.tiktokUrl,
