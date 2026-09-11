@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSessionUser } from '@/lib/auth';
+import { cleanMapsInput } from '@/lib/maps';
 
 export async function GET() {
   try {
@@ -38,13 +39,7 @@ export async function PUT(req: Request) {
     let updatedTheme = null;
 
     if (site) {
-      let cleanMapsEmbedUrl = site.mapsEmbedUrl;
-      if (typeof cleanMapsEmbedUrl === 'string' && cleanMapsEmbedUrl.includes('<iframe')) {
-        const match = cleanMapsEmbedUrl.match(/src=["']([^"']+)["']/i);
-        if (match && match[1]) {
-          cleanMapsEmbedUrl = match[1];
-        }
-      }
+      let cleanMapsEmbedUrl = cleanMapsInput(site.mapsEmbedUrl || '');
 
       updatedSite = await prisma.siteSetting.upsert({
         where: { id: 'default' },

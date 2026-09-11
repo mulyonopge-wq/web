@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import MediaPickerModal from '@/components/admin/MediaPickerModal';
-import { getValidMapsUrl } from '@/lib/maps';
+import { getValidMapsUrl, cleanMapsInput } from '@/lib/maps';
 
 export default function WebsiteSettingsPage() {
   const toast = useToast();
@@ -108,12 +108,12 @@ export default function WebsiteSettingsPage() {
       }
     }
 
-    // Auto extract src if user pasted full <iframe ...> tag into mapsEmbedUrl
-    if (name === 'mapsEmbedUrl' && value.includes('<iframe')) {
-      const match = value.match(/src=["']([^"']+)["']/i);
-      if (match && match[1]) {
-        updated.mapsEmbedUrl = match[1];
-        toast.info('URL Google Maps berhasil diekstrak otomatis dari kode iframe!');
+    // Auto clean and extract mapsEmbedUrl if user pasted iframe or regular google maps link
+    if (name === 'mapsEmbedUrl') {
+      const cleaned = cleanMapsInput(value);
+      if (cleaned !== value) {
+        updated.mapsEmbedUrl = cleaned;
+        toast.info('Tautan Google Maps berhasil disesuaikan secara otomatis!');
       }
     }
 
@@ -125,6 +125,7 @@ export default function WebsiteSettingsPage() {
     setSaving(true);
     try {
       const payload = { ...form };
+      payload.mapsEmbedUrl = cleanMapsInput(payload.mapsEmbedUrl);
       if (!payload.metaTitle || payload.metaTitle.toLowerCase().includes('jangkriknet')) {
         payload.metaTitle = `${payload.companyName} - ${payload.tagline || 'Official Store & Company Profile'}`;
       }
