@@ -93,21 +93,44 @@ export default function WebsiteSettingsPage() {
   }, [toast]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let updated = { ...form, [name]: value };
+
+    // If companyName changes, auto-update metaTitle & copyright if they were using the old default
+    if (name === 'companyName' && value) {
+      if (!form.metaTitle || form.metaTitle.toLowerCase().includes('jangkriknet')) {
+        updated.metaTitle = `${value} - ${form.tagline || 'Official Store & Company Profile'}`;
+      }
+      if (!form.copyrightText || form.copyrightText.toLowerCase().includes('jangkriknet')) {
+        updated.copyrightText = `© ${new Date().getFullYear()} ${value}. All Rights Reserved.`;
+      }
+    }
+
+    setForm(updated);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
+      const payload = { ...form };
+      if (!payload.metaTitle || payload.metaTitle.toLowerCase().includes('jangkriknet')) {
+        payload.metaTitle = `${payload.companyName} - ${payload.tagline || 'Official Store & Company Profile'}`;
+      }
+      if (!payload.copyrightText || payload.copyrightText.toLowerCase().includes('jangkriknet')) {
+        payload.copyrightText = `© ${new Date().getFullYear()} ${payload.companyName}. All Rights Reserved.`;
+      }
+
       const res = await fetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ site: form }),
+        body: JSON.stringify({ site: payload }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        toast.success('Pengaturan website berhasil disimpan!');
+        setForm(payload);
+        document.title = `Pengaturan Website & SEO | ${payload.companyName}`;
+        toast.success('Pengaturan website dan judul tab berhasil disimpan!');
       } else {
         toast.error(data.error || 'Gagal menyimpan pengaturan');
       }
@@ -216,6 +239,37 @@ export default function WebsiteSettingsPage() {
                   placeholder="Solusi Jaringan & Produk Digital Terpercaya"
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
+              </div>
+
+              {/* Judul Tab Browser (Meta Title) */}
+              <div className="md:col-span-2">
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                  Judul Tab Browser (Meta Title)
+                </label>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="text"
+                    name="metaTitle"
+                    value={form.metaTitle}
+                    onChange={handleChange}
+                    placeholder={`${form.companyName || 'BUMDES'} - ${form.tagline || 'Official Store'}`}
+                    className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none font-medium"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newTitle = `${form.companyName || 'BUMDES'} - ${form.tagline || 'Produk Unggulan Indonesia'}`;
+                      setForm({ ...form, metaTitle: newTitle });
+                      toast.info('Judul tab disinkronkan!');
+                    }}
+                    className="px-4 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors whitespace-nowrap cursor-pointer"
+                  >
+                    Gunakan Nama & Tagline
+                  </button>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Judul yang tampil pada tab browser pengunjung (Google Chrome, Safari, dll).
+                </p>
               </div>
 
               {/* Logo */}

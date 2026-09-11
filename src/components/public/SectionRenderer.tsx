@@ -95,21 +95,7 @@ export default function SectionRenderer({
                 </Link>
               </div>
 
-              {/* Quick guarantee badges */}
-              <div className="pt-6 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-xs text-slate-400 font-medium">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  <span>100% Produk Asli</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  <span>Garansi Resmi Distributor</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  <span>Pengiriman Seluruh Indonesia</span>
-                </div>
-              </div>
+
             </div>
 
             <div className="lg:col-span-5 relative">

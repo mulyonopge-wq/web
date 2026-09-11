@@ -6,6 +6,7 @@ import { getSessionUser } from '@/lib/auth';
 export async function GET() {
   try {
     const sections = await prisma.section.findMany({
+      where: { type: { not: 'CATALOG_BANNER' } },
       orderBy: { order: 'asc' },
     });
     return NextResponse.json({ sections });

@@ -14,6 +14,7 @@ import {
   Loader2,
   CheckCircle,
   AlertTriangle,
+  Sliders,
 } from 'lucide-react';
 import { formatRupiah } from '@/lib/currency';
 import { useToast } from '@/components/ui/Toast';
@@ -89,13 +90,22 @@ export default function AllProductsAdminPage() {
             Kelola inventaris barang, harga jual, diskon, stok dan produk unggulan
           </p>
         </div>
-        <Link
-          href="/admin/products/new"
-          className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl shadow-md shadow-blue-500/20 flex items-center gap-2 transition-all cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Tambah Produk Baru</span>
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/admin/products/banner"
+            className="px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs rounded-xl shadow-xs flex items-center gap-2 transition-all cursor-pointer"
+          >
+            <Sliders className="w-3.5 h-3.5 text-blue-600" />
+            <span>Edit Card Katalog</span>
+          </Link>
+          <Link
+            href="/admin/products/new"
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl shadow-md shadow-blue-500/20 flex items-center gap-2 transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tambah Produk Baru</span>
+          </Link>
+        </div>
       </div>
 
       {/* Filter Bar */}

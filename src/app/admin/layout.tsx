@@ -12,7 +12,57 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
+  const [siteName, setSiteName] = useState('BUMDES');
+
   const isLoginPage = pathname === '/admin/login';
+
+  useEffect(() => {
+    // Load site settings to set browser title and favicon
+    fetch('/api/settings')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.site?.companyName) {
+          setSiteName(data.site.companyName);
+        }
+        if (data.site?.faviconUrl) {
+          let link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
+          if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            document.getElementsByTagName('head')[0].appendChild(link);
+          }
+          link.href = data.site.faviconUrl;
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const pageMap: Record<string, string> = {
+      '/admin': 'Dashboard',
+      '/admin/website': 'Pengaturan Website & SEO',
+      '/admin/builder': 'Homepage Builder',
+      '/admin/navigation': 'Menu Navigasi',
+      '/admin/company': 'Profil Perusahaan',
+      '/admin/appearance': 'Theme & Colors',
+      '/admin/products': 'Katalog Semua Produk',
+      '/admin/products/new': 'Tambah Produk Baru',
+      '/admin/products/banner': 'Editor Card Katalog',
+      '/admin/categories': 'Kategori Produk',
+      '/admin/orders': 'Daftar Pesanan',
+      '/admin/pages': 'Halaman Dinamis',
+      '/admin/blog': 'Artikel & Berita',
+      '/admin/content/testimonials': 'Testimoni',
+      '/admin/content/faqs': 'FAQ Tanya Jawab',
+      '/admin/media': 'Media Library',
+      '/admin/profile': 'Profil Akun',
+      '/admin/system/backup': 'Backup & Restore',
+      '/admin/system/update': 'Update Sistem',
+    };
+
+    const sectionName = pageMap[pathname] || 'Admin Panel';
+    document.title = `${sectionName} | ${siteName}`;
+  }, [pathname, siteName]);
 
   useEffect(() => {
     if (isLoginPage) {

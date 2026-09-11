@@ -5,6 +5,8 @@ import ProductCard from '@/components/public/ProductCard';
 import ProductFilterBar from '@/components/public/ProductFilterBar';
 import { Filter, Package } from 'lucide-react';
 
+import { getCatalogBanner } from '@/lib/catalogBanner';
+
 export const revalidate = 0;
 
 export default async function ProductsCatalogPage({
@@ -38,7 +40,7 @@ export default async function ProductsCatalogPage({
   if (sort === 'price-desc') orderBy = { price: 'desc' };
   if (sort === 'featured') orderBy = [{ isFeatured: 'desc' }, { createdAt: 'desc' }];
 
-  const [site, categories, products, totalProducts] = await Promise.all([
+  const [site, categories, products, totalProducts, banner] = await Promise.all([
     prisma.siteSetting.findUnique({ where: { id: 'default' } }),
     prisma.category.findMany({
       where: { isActive: true },
@@ -55,33 +57,56 @@ export default async function ProductsCatalogPage({
       take: limit,
     }),
     prisma.product.count({ where }),
+    getCatalogBanner(),
   ]);
 
   const totalPages = Math.ceil(totalProducts / limit);
 
+  let bannerBgClass = 'bg-slate-900 border-slate-800';
+  if (banner.bgType === 'navy') bannerBgClass = 'bg-gradient-to-r from-slate-950 via-blue-950 to-slate-900 border-blue-900/50';
+  else if (banner.bgType === 'emerald') bannerBgClass = 'bg-gradient-to-r from-slate-950 via-emerald-950 to-slate-900 border-emerald-900/50';
+  else if (banner.bgType === 'purple') bannerBgClass = 'bg-gradient-to-r from-slate-950 via-purple-950 to-slate-900 border-purple-900/50';
+  else if (banner.bgType === 'custom') bannerBgClass = 'bg-slate-900 relative overflow-hidden border-slate-800';
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
       {/* Header Banner */}
-      <div className="bg-slate-900 rounded-3xl p-8 sm:p-12 text-white flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
-            Katalog Produk & Toko Online
+      <div className={`rounded-3xl p-8 sm:p-12 text-white flex flex-col md:flex-row md:items-center justify-between gap-6 border shadow-xl relative overflow-hidden ${bannerBgClass}`}>
+        {banner.bgType === 'custom' && banner.bgImageUrl && (
+          <>
+            <img
+              src={banner.bgImageUrl}
+              alt="Banner Background"
+              className="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-900/80 to-transparent pointer-events-none" />
+          </>
+        )}
+
+        <div className="space-y-2 relative z-10">
+          <span className="text-xs font-bold uppercase tracking-wider text-amber-400 inline-block">
+            {banner.badge || 'Katalog Produk & Toko Online'}
           </span>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-            Peralatan & Aksesoris Terlengkap
+            {banner.title || 'Peralatan & Aksesoris Terlengkap'}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
-            Temukan router, switch PoE, CCTV, kabel Cat6, dan berbagai perangkat mutakhir bergaransi resmi.
+          <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+            {banner.subtitle ||
+              'Temukan berbagai produk unggulan berkualitas dengan penawaran terbaik dan bergaransi resmi.'}
           </p>
         </div>
 
         {/* Live Counter */}
-        <div className="px-6 py-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-center flex-shrink-0">
-          <span className="block text-2xl sm:text-3xl font-black text-amber-400 font-mono">
-            {totalProducts}
-          </span>
-          <span className="text-xs text-slate-300 font-medium">Produk Tersedia</span>
-        </div>
+        {banner.showCounter && (
+          <div className="px-6 py-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-center flex-shrink-0 relative z-10">
+            <span className="block text-2xl sm:text-3xl font-black text-amber-400 font-mono">
+              {totalProducts}
+            </span>
+            <span className="text-xs text-slate-300 font-medium">
+              {banner.counterLabel || 'Produk Tersedia'}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Filter & Search Controls Bar */}

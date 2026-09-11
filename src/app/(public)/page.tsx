@@ -19,7 +19,7 @@ export default async function HomePage() {
       create: { id: 'default' },
     }),
     prisma.section.findMany({
-      where: { isActive: true },
+      where: { isActive: true, type: { not: 'CATALOG_BANNER' } },
       orderBy: { order: 'asc' },
     }),
     prisma.category.findMany({

@@ -5,29 +5,45 @@ import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import { CartProvider } from '@/context/CartContext';
 import { ToastProvider } from '@/components/ui/Toast';
 
+export const revalidate = 0;
+
 export async function generateMetadata(): Promise<Metadata> {
   try {
     const site = await prisma.siteSetting.findUnique({ where: { id: 'default' } });
     if (!site) {
       return {
-        title: 'Jangkriknet - Official Store & Company Profile',
+        title: 'BUMDES - Official Store & Company Profile',
         description: 'Pusat belanja produk berkualitas dan company profile terpercaya.',
       };
     }
+
+    const companyName = site.companyName || 'BUMDES';
+    const tagline = site.tagline || 'Produk Unggulan Indonesia';
+
+    // If company name was customized but metaTitle still has old default 'Jangkriknet', use customized name
+    const isCustomCompany = companyName.toLowerCase() !== 'jangkriknet';
+    const metaTitleHasJangkrik = site.metaTitle && site.metaTitle.toLowerCase().includes('jangkriknet');
+
+    const title = (isCustomCompany && metaTitleHasJangkrik)
+      ? `${companyName} - ${tagline}`
+      : (site.metaTitle || `${companyName} - ${tagline}`);
+
+    const description = site.metaDescription || site.shortDescription;
+
     return {
-      title: site.metaTitle || `${site.companyName} - ${site.tagline}`,
-      description: site.metaDescription || site.shortDescription,
+      title,
+      description,
       keywords: site.metaKeywords,
       icons: site.faviconUrl ? [{ url: site.faviconUrl }] : undefined,
       openGraph: {
-        title: site.metaTitle || site.companyName,
-        description: site.metaDescription || site.shortDescription,
+        title,
+        description,
         images: site.ogImageUrl ? [{ url: site.ogImageUrl }] : undefined,
       },
     };
   } catch {
     return {
-      title: 'Jangkriknet - Official Store & Company Profile',
+      title: 'BUMDES - Official Store & Company Profile',
     };
   }
 }

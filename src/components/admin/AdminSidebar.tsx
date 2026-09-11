@@ -263,6 +263,19 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 >
                   Kategori Produk
                 </Link>
+                <Link
+                  href="/admin/products/banner"
+                  className={`flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-colors ${
+                    pathname === '/admin/products/banner'
+                      ? 'bg-blue-600/20 text-blue-400'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  }`}
+                >
+                  <span>Edit Card Katalog</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">
+                    Card
+                  </span>
+                </Link>
               </div>
             )}
           </div>

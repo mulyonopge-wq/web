@@ -13,10 +13,12 @@ import {
   CheckCircle,
 } from 'lucide-react';
 
+import { getCompanyTitles } from '@/lib/companyTitles';
+
 export const revalidate = 0;
 
 export default async function CompanyProfilePage() {
-  const [site, profile] = await Promise.all([
+  const [site, profile, titles] = await Promise.all([
     prisma.siteSetting.upsert({
       where: { id: 'default' },
       update: {},
@@ -27,6 +29,7 @@ export default async function CompanyProfilePage() {
       update: {},
       create: { id: 'default' },
     }),
+    getCompanyTitles(),
   ]);
 
   let values: any[] = [];
@@ -51,13 +54,13 @@ export default async function CompanyProfilePage() {
       <section className="bg-gradient-to-b from-slate-900 to-indigo-950 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
           <span className="text-xs font-bold uppercase tracking-wider text-amber-400 px-3 py-1 rounded-full bg-white/10 inline-block">
-            Official Company Profile
+            {titles.headerBadge || 'Official Company Profile'}
           </span>
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight">
-            {site.companyName}
+            {titles.headerTitle || site.companyName}
           </h1>
           <p className="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-            {site.tagline}
+            {titles.headerSubtitle || site.tagline}
           </p>
         </div>
       </section>
@@ -68,10 +71,10 @@ export default async function CompanyProfilePage() {
           <div className="lg:col-span-6 space-y-6">
             <div className="flex items-center gap-2 text-theme-primary font-bold text-xs uppercase tracking-wider">
               <Clock className="w-4 h-4" />
-              <span>Sejarah Perusahaan</span>
+              <span>{titles.historyBadge || 'Sejarah Perusahaan'}</span>
             </div>
             <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
-              Tumbuh dan Berinovasi Bersama Mitra di Seluruh Indonesia
+              {titles.historyTitle || 'Tumbuh dan Berinovasi Bersama Mitra di Seluruh Indonesia'}
             </h2>
             <div className="text-slate-600 text-sm leading-relaxed space-y-4">
               <p>{profile.history}</p>
@@ -82,7 +85,10 @@ export default async function CompanyProfilePage() {
           <div className="lg:col-span-6">
             <div className="relative rounded-3xl overflow-hidden shadow-2xl aspect-4/3 bg-slate-100">
               <img
-                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1000&q=80"
+                src={
+                  titles.historyImage ||
+                  'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1000&q=80'
+                }
                 alt="Kantor Kami"
                 className="w-full h-full object-cover"
               />
@@ -98,7 +104,9 @@ export default async function CompanyProfilePage() {
             <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
               <Target className="w-6 h-6" />
             </div>
-            <h3 className="text-2xl font-extrabold text-slate-900">Visi Kami</h3>
+            <h3 className="text-2xl font-extrabold text-slate-900">
+              {titles.visionTitle || 'Visi Kami'}
+            </h3>
             <p className="text-slate-700 text-sm leading-relaxed">{profile.vision}</p>
           </div>
 
@@ -106,7 +114,9 @@ export default async function CompanyProfilePage() {
             <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-lg shadow-amber-500/20">
               <Sparkles className="w-6 h-6" />
             </div>
-            <h3 className="text-2xl font-extrabold text-slate-900">Misi Kami</h3>
+            <h3 className="text-2xl font-extrabold text-slate-900">
+              {titles.missionTitle || 'Misi Kami'}
+            </h3>
             <div className="text-slate-700 text-sm leading-relaxed whitespace-pre-line">
               {profile.mission}
             </div>
@@ -120,10 +130,11 @@ export default async function CompanyProfilePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-2xl mx-auto mb-12">
               <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                Nilai-Nilai Utama Perusahaan
+                {titles.valuesTitle || 'Nilai-Nilai Utama Perusahaan'}
               </h2>
               <p className="text-xs text-slate-500 mt-2">
-                Fondasi dasar integritas dan keunggulan pelayanan kami kepada masyarakat
+                {titles.valuesSubtitle ||
+                  'Fondasi dasar integritas dan keunggulan pelayanan kami kepada masyarakat'}
               </p>
             </div>
 
@@ -149,10 +160,11 @@ export default async function CompanyProfilePage() {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-              Tim Manajemen & Pimpinan
+              {titles.teamTitle || 'Tim Manajemen & Pimpinan'}
             </h2>
             <p className="text-xs text-slate-500 mt-2">
-              Profesional berdedikasi tinggi di balik perkembangan dan kualitas produk kami
+              {titles.teamSubtitle ||
+                'Profesional berdedikasi tinggi di balik perkembangan dan kualitas produk kami'}
             </p>
           </div>
 
@@ -184,9 +196,11 @@ export default async function CompanyProfilePage() {
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
                 <Award className="w-4 h-4" />
-                <span>Sertifikasi & Standar Mutu</span>
+                <span>{titles.certBadge || 'Sertifikasi & Standar Mutu'}</span>
               </div>
-              <h3 className="text-2xl font-extrabold">Jaminan Kualitas Bertaraf Nasional</h3>
+              <h3 className="text-2xl font-extrabold">
+                {titles.certTitle || 'Jaminan Kualitas Bertaraf Nasional'}
+              </h3>
               <ul className="space-y-3 pt-2">
                 {certifications.map((cert: string, idx: number) => (
                   <li key={idx} className="flex items-center gap-3 text-xs sm:text-sm text-slate-300">
@@ -201,9 +215,11 @@ export default async function CompanyProfilePage() {
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-blue-400 font-bold text-xs uppercase tracking-wider">
                 <ShieldCheck className="w-4 h-4" />
-                <span>Legalitas Resmi Perusahaan</span>
+                <span>{titles.legalBadge || 'Legalitas Resmi Perusahaan'}</span>
               </div>
-              <h3 className="text-2xl font-extrabold">Terdaftar Resmi Berpayung Hukum</h3>
+              <h3 className="text-2xl font-extrabold">
+                {titles.legalTitle || 'Terdaftar Resmi Berpayung Hukum'}
+              </h3>
               <div className="space-y-3 pt-2">
                 {legalities.map((item: any, idx: number) => (
                   <div key={idx} className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between">
@@ -222,7 +238,9 @@ export default async function CompanyProfilePage() {
         <div className="rounded-3xl border border-slate-200 overflow-hidden shadow-xs bg-white">
           <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="font-bold text-slate-900 text-base">Lokasi Kantor & Pusat Operasional</h3>
+              <h3 className="font-bold text-slate-900 text-base">
+                {titles.locationTitle || 'Lokasi Kantor & Pusat Operasional'}
+              </h3>
               <p className="text-xs text-slate-500 mt-0.5">{site.address}, {site.city}</p>
             </div>
             <div className="flex items-center gap-3 text-xs font-semibold">
