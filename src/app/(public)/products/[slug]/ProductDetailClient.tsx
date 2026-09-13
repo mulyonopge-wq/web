@@ -86,11 +86,13 @@ export default function ProductDetailClient({
             {selectedImage ? (
               isMainVideo ? (
                 <video
+                  key={selectedImage}
                   src={selectedImage}
                   controls
                   playsInline
                   autoPlay
                   muted
+                  preload="auto"
                   className="w-full h-full object-contain bg-black rounded-3xl"
                 />
               ) : (
@@ -139,6 +141,7 @@ export default function ProductDetailClient({
                       <div className="w-full h-full bg-slate-900 flex items-center justify-center relative">
                         <video
                           src={img.imageUrl}
+                          preload="metadata"
                           className="w-full h-full object-cover opacity-70"
                         />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/30">
