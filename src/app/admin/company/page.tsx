@@ -96,10 +96,11 @@ export default function CompanyProfileCmsPage() {
           cardTitles,
         }),
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
         toast.success('Profil perusahaan dan judul card berhasil disimpan!');
       } else {
-        toast.error('Gagal menyimpan profil');
+        toast.error(data.error || 'Gagal menyimpan profil');
       }
     } catch (e) {
       console.error(e);
