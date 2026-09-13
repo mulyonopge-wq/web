@@ -77,9 +77,11 @@ export default async function CompanyProfilePage() {
             <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
               {titles.historyTitle || 'Tumbuh dan Berinovasi Bersama Mitra di Seluruh Indonesia'}
             </h2>
-            <div className="text-slate-600 text-sm leading-relaxed space-y-4">
-              <p>{profile.history}</p>
-              <p>{site.aboutText}</p>
+            <div className="text-slate-600 text-sm leading-relaxed space-y-4 whitespace-pre-line">
+              <p>
+                {profile.history ||
+                  (!site.aboutText?.toLowerCase().includes('jangkriknet') ? site.aboutText : '')}
+              </p>
             </div>
           </div>
 

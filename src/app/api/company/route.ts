@@ -64,6 +64,19 @@ export async function PUT(req: Request) {
       },
     });
 
+    // Otomatis bersihkan aboutText dummy jangkriknet di siteSetting jika masih ada
+    try {
+      const site = await prisma.siteSetting.findUnique({ where: { id: 'default' } });
+      if (site && site.aboutText && site.aboutText.toLowerCase().includes('jangkriknet')) {
+        await prisma.siteSetting.update({
+          where: { id: 'default' },
+          data: { aboutText: '' },
+        });
+      }
+    } catch {
+      // ignore
+    }
+
     const updatedTitles = await getCompanyTitles();
     return NextResponse.json({ success: true, profile, cardTitles: updatedTitles });
   } catch (error: any) {

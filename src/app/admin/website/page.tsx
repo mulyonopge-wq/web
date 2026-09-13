@@ -65,7 +65,7 @@ export default function WebsiteSettingsPage() {
             logoUrl: data.site.logoUrl || '',
             faviconUrl: data.site.faviconUrl || '',
             shortDescription: data.site.shortDescription || '',
-            aboutText: data.site.aboutText || '',
+            aboutText: data.site.aboutText && !data.site.aboutText.toLowerCase().includes('jangkriknet') ? data.site.aboutText : '',
             address: data.site.address || '',
             city: data.site.city || '',
             phone: data.site.phone || '',
@@ -131,6 +131,9 @@ export default function WebsiteSettingsPage() {
       }
       if (!payload.copyrightText || payload.copyrightText.toLowerCase().includes('jangkriknet')) {
         payload.copyrightText = `© ${new Date().getFullYear()} ${payload.companyName}. All Rights Reserved.`;
+      }
+      if (payload.aboutText && payload.aboutText.toLowerCase().includes('jangkriknet')) {
+        payload.aboutText = '';
       }
 
       const res = await fetch('/api/settings', {

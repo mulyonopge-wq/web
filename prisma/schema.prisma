@@ -34,7 +34,7 @@ model SiteSetting {
   logoUrl          String?  @default("")
   faviconUrl       String?  @default("")
   shortDescription String   @default("Perusahaan penyedia produk berkualitas tinggi dengan pelayanan terpercaya dan profesional.")
-  aboutText        String   @default("Jangkriknet didirikan dengan komitmen untuk memberikan produk dan layanan terbaik bagi seluruh masyarakat Indonesia.")
+  aboutText        String   @default("")
   
   // Kontak
   address          String   @default("Jl. Merdeka Raya No. 45, Jakarta Pusat")

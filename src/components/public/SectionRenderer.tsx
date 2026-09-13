@@ -150,7 +150,7 @@ export default function SectionRenderer({
               <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
                 {content.description ||
                   subtitle ||
-                  siteSettings.aboutText ||
+                  (siteSettings.aboutText && !siteSettings.aboutText.toLowerCase().includes('jangkriknet') ? siteSettings.aboutText : null) ||
                   siteSettings.shortDescription}
               </p>
 
