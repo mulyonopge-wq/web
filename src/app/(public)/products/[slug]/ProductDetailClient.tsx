@@ -121,16 +121,6 @@ export default function ProductDetailClient({
                 DISKON {discountPercent}%
               </span>
             )}
-            {isMainVideo && (
-              <span
-                className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold text-white shadow-md flex items-center gap-1.5 z-10 ${
-                  isYouTubeUrl(selectedImage) ? 'bg-red-600' : 'bg-purple-600'
-                }`}
-              >
-                <Film className="w-3.5 h-3.5" />
-                {isYouTubeUrl(selectedImage) ? 'YouTube Video' : 'Video Demo'}
-              </span>
-            )}
           </div>
 
           {/* Thumbnails */}
