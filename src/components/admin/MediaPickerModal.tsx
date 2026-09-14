@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Upload, Check, Image as ImageIcon, Loader2, Film, Play } from 'lucide-react';
-import { isVideoUrl } from '@/lib/media';
+import { isVideoUrl, isYouTubeUrl, getYouTubeThumbnail, getYouTubeEmbedUrl } from '@/lib/media';
 
 interface MediaItem {
   id: string;
@@ -104,7 +104,16 @@ export default function MediaPickerModal({
 
   const handleConfirm = () => {
     if (activeTab === 'url' && customUrl) {
-      onSelect(customUrl);
+      const trimmed = customUrl.trim();
+      if (trimmed) {
+        // Automatically save to Media Library so it can be reused across the site
+        fetch('/api/media', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: trimmed }),
+        }).catch(() => {});
+        onSelect(trimmed);
+      }
     } else if (selectedUrl) {
       onSelect(selectedUrl);
     }
@@ -173,7 +182,7 @@ export default function MediaPickerModal({
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            URL Gambar
+            URL / YouTube
           </button>
         </div>
 
@@ -196,7 +205,8 @@ export default function MediaPickerModal({
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {mediaList.map((item, index) => {
                     const isSelected = selectedUrl === item.url;
-                    const isVideo = isVideoUrl(item.url) || item.mimeType?.startsWith('video/');
+                    const isYt = isYouTubeUrl(item.url) || item.mimeType === 'video/youtube';
+                    const isVideo = isYt || isVideoUrl(item.url) || item.mimeType?.startsWith('video/');
                     return (
                       <div
                         key={item.id}
@@ -220,15 +230,28 @@ export default function MediaPickerModal({
 
                         {isVideo ? (
                           <div className="w-full h-full relative flex items-center justify-center bg-slate-950">
-                            <video
-                              src={item.url}
-                              className="w-full h-full object-cover opacity-80"
-                              muted
-                              playsInline
-                            />
-                            <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-black/70 text-white text-[10px] font-bold flex items-center gap-1 z-10">
-                              <Film className="w-3 h-3 text-amber-400" />
-                              <span>VIDEO</span>
+                            {isYt ? (
+                              <img
+                                src={getYouTubeThumbnail(item.url)}
+                                alt={item.originalName}
+                                className="w-full h-full object-cover opacity-90"
+                              />
+                            ) : (
+                              <video
+                                src={item.url}
+                                className="w-full h-full object-cover opacity-80"
+                                muted
+                                playsInline
+                                preload="metadata"
+                              />
+                            )}
+                            <div
+                              className={`absolute top-2 right-2 px-2 py-0.5 rounded-md text-white text-[10px] font-bold flex items-center gap-1 z-10 ${
+                                isYt ? 'bg-red-600' : 'bg-black/70'
+                              }`}
+                            >
+                              <Film className={`w-3 h-3 ${isYt ? 'text-white' : 'text-amber-400'}`} />
+                              <span>{isYt ? 'YOUTUBE' : 'VIDEO'}</span>
                             </div>
                             <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center text-white">
                               <Play className="w-4 h-4 fill-white ml-0.5" />
@@ -297,26 +320,51 @@ export default function MediaPickerModal({
           {activeTab === 'url' && (
             <div className="space-y-4 py-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Masukkan URL Gambar Langsung
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Masukkan Link Video YouTube atau URL Gambar / Video
                 </label>
+                <p className="text-xs text-slate-400 mb-2">
+                  Mendukung link YouTube biasa, YouTube Shorts, atau URL foto/video eksternal. Link otomatis tersimpan di Media Library.
+                </p>
                 <input
                   type="url"
-                  placeholder="https://example.com/gambar.jpg"
+                  placeholder="Contoh: https://www.youtube.com/watch?v=... atau https://youtu.be/..."
                   value={customUrl}
                   onChange={(e) => setCustomUrl(e.target.value)}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 />
               </div>
+
               {customUrl && (
-                <div className="mt-4 rounded-xl border border-slate-100 p-3 bg-slate-50 inline-block">
-                  <p className="text-xs text-slate-500 mb-2 font-medium">Preview:</p>
-                  <img
-                    src={customUrl}
-                    alt="Preview"
-                    className="max-h-48 rounded-lg object-contain"
-                    onError={() => {}}
-                  />
+                <div className="mt-4 rounded-xl border border-slate-100 p-4 bg-slate-50">
+                  <p className="text-xs text-slate-500 mb-2 font-medium">Preview Media:</p>
+                  {isYouTubeUrl(customUrl) ? (
+                    <div className="relative rounded-xl overflow-hidden aspect-video max-w-md bg-black shadow-sm">
+                      <iframe
+                        src={getYouTubeEmbedUrl(customUrl)}
+                        title="YouTube Preview"
+                        className="w-full h-full border-0"
+                        allowFullScreen
+                      />
+                      <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-red-600 text-white text-[10px] font-bold flex items-center gap-1 shadow-sm">
+                        <Film className="w-3 h-3" />
+                        <span>YOUTUBE VIDEO</span>
+                      </div>
+                    </div>
+                  ) : isVideoUrl(customUrl) ? (
+                    <video
+                      src={customUrl}
+                      controls
+                      className="max-h-48 rounded-lg shadow-sm"
+                    />
+                  ) : (
+                    <img
+                      src={customUrl}
+                      alt="Preview"
+                      className="max-h-48 rounded-lg object-contain"
+                      onError={() => {}}
+                    />
+                  )}
                 </div>
               )}
             </div>

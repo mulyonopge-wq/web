@@ -17,7 +17,7 @@ import {
 import { formatRupiah } from '@/lib/currency';
 import { useCart } from '@/context/CartContext';
 import { generateWhatsAppUrl } from '@/lib/whatsapp';
-import { isVideoUrl } from '@/lib/media';
+import { isVideoUrl, isYouTubeUrl, getYouTubeEmbedUrl, getYouTubeThumbnail } from '@/lib/media';
 
 interface ProductDetailClientProps {
   product: any;
@@ -84,7 +84,16 @@ export default function ProductDetailClient({
         <div className="lg:col-span-6 space-y-4">
           <div className="relative aspect-square rounded-3xl overflow-hidden bg-slate-950/5 border border-slate-200/80 shadow-xs flex items-center justify-center">
             {selectedImage ? (
-              isMainVideo ? (
+              isYouTubeUrl(selectedImage) ? (
+                <iframe
+                  key={selectedImage}
+                  src={getYouTubeEmbedUrl(selectedImage)}
+                  title={product.name}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="w-full h-full rounded-3xl border-0 bg-black"
+                />
+              ) : isMainVideo ? (
                 <video
                   key={selectedImage}
                   src={selectedImage}
@@ -113,9 +122,13 @@ export default function ProductDetailClient({
               </span>
             )}
             {isMainVideo && (
-              <span className="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold bg-purple-600 text-white shadow-md flex items-center gap-1.5 z-10">
+              <span
+                className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold text-white shadow-md flex items-center gap-1.5 z-10 ${
+                  isYouTubeUrl(selectedImage) ? 'bg-red-600' : 'bg-purple-600'
+                }`}
+              >
                 <Film className="w-3.5 h-3.5" />
-                Video Demo
+                {isYouTubeUrl(selectedImage) ? 'YouTube Video' : 'Video Demo'}
               </span>
             )}
           </div>
@@ -125,6 +138,7 @@ export default function ProductDetailClient({
             <div className="flex gap-3 overflow-x-auto pb-2">
               {allImages.map((img, idx) => {
                 const isVid = isVideoUrl(img.imageUrl);
+                const isYt = isYouTubeUrl(img.imageUrl);
                 const isSelected = selectedImage === img.imageUrl;
 
                 return (
@@ -139,16 +153,28 @@ export default function ProductDetailClient({
                   >
                     {isVid ? (
                       <div className="w-full h-full bg-slate-900 flex items-center justify-center relative">
-                        <video
-                          src={img.imageUrl}
-                          preload="metadata"
-                          className="w-full h-full object-cover opacity-70"
-                        />
+                        {isYt ? (
+                          <img
+                            src={getYouTubeThumbnail(img.imageUrl)}
+                            alt=""
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <video
+                            src={img.imageUrl}
+                            preload="metadata"
+                            className="w-full h-full object-cover opacity-70"
+                          />
+                        )}
                         <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                           <Play className="w-6 h-6 text-white drop-shadow fill-white" />
                         </div>
-                        <span className="absolute bottom-1 right-1 px-1 py-0.2 text-[8px] font-black bg-purple-600 text-white rounded">
-                          VID
+                        <span
+                          className={`absolute bottom-1 right-1 px-1 py-0.2 text-[8px] font-black text-white rounded ${
+                            isYt ? 'bg-red-600' : 'bg-purple-600'
+                          }`}
+                        >
+                          {isYt ? 'YT' : 'VID'}
                         </span>
                       </div>
                     ) : (

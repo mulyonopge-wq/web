@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import MediaPickerModal from '@/components/admin/MediaPickerModal';
-import { isVideoUrl } from '@/lib/media';
+import { isVideoUrl, isYouTubeUrl, getYouTubeThumbnail } from '@/lib/media';
 
 interface ProductFormProps {
   initialData?: any;
@@ -460,7 +460,7 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
             <div className="flex items-center justify-between border-b pb-3">
               <div>
                 <h3 className="text-base font-bold text-slate-800">Media Produk (Foto & Video)</h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">Dukung banyak foto & file video (.mp4, .webm)</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">Dukung banyak foto, file video (.mp4), dan link YouTube</p>
               </div>
               <button
                 type="button"
@@ -481,7 +481,7 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
                 type="text"
                 value={newMediaInput}
                 onChange={(e) => setNewMediaInput(e.target.value)}
-                placeholder="Tempel URL Foto atau Video..."
+                placeholder="Tempel URL Foto, Video (.mp4), atau Link YouTube..."
                 className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
@@ -508,13 +508,14 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
                 </div>
                 <p className="text-xs text-slate-500 font-medium">Belum ada foto atau video produk</p>
                 <p className="text-[11px] text-slate-400">
-                  Klik "Pilih Media" untuk mengunggah dari komputer atau masukkan link URL
+                  Klik "Pilih Media" untuk mengunggah dari komputer atau tempel link YouTube/URL
                 </p>
               </div>
             ) : (
               <div className="space-y-3">
                 {form.images.map((media, idx) => {
                   const isVid = isVideoUrl(media.imageUrl);
+                  const isYt = isYouTubeUrl(media.imageUrl);
                   const isMain = form.mainImage === media.imageUrl;
 
                   return (
@@ -530,16 +531,28 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
                       <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-900 flex-shrink-0 relative border border-slate-200">
                         {isVid ? (
                           <div className="w-full h-full flex flex-col items-center justify-center relative">
-                            <video
-                              src={media.imageUrl}
-                              className="w-full h-full object-cover opacity-75"
-                              preload="metadata"
-                            />
+                            {isYt ? (
+                              <img
+                                src={getYouTubeThumbnail(media.imageUrl)}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <video
+                                src={media.imageUrl}
+                                className="w-full h-full object-cover opacity-75"
+                                preload="metadata"
+                              />
+                            )}
                             <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                               <Film className="w-5 h-5 text-white drop-shadow" />
                             </div>
-                            <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 text-[9px] font-bold bg-purple-600 text-white rounded">
-                              VIDEO
+                            <span
+                              className={`absolute bottom-0.5 right-0.5 px-1 py-0.2 text-[9px] font-bold text-white rounded ${
+                                isYt ? 'bg-red-600' : 'bg-purple-600'
+                              }`}
+                            >
+                              {isYt ? 'YOUTUBE' : 'VIDEO'}
                             </span>
                           </div>
                         ) : (
@@ -555,7 +568,7 @@ export default function ProductForm({ initialData, productId }: ProductFormProps
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 mb-1">
                           <span className="text-[11px] font-bold text-slate-700 truncate">
-                            {isVid ? 'File Video' : 'File Foto'} #{idx + 1}
+                            {isYt ? 'Video YouTube' : isVid ? 'File Video' : 'File Foto'} #{idx + 1}
                           </span>
                           {isMain && (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-600 text-white flex items-center gap-1">

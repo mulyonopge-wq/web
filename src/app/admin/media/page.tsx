@@ -13,9 +13,11 @@ import {
   Film,
   Play,
   CheckCircle2,
+  Plus,
+  X,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
-import { isVideoUrl } from '@/lib/media';
+import { isVideoUrl, isYouTubeUrl, getYouTubeThumbnail, getYouTubeEmbedUrl } from '@/lib/media';
 
 interface MediaItem {
   id: string;
@@ -35,6 +37,47 @@ export default function MediaLibraryAdminPage() {
   const [search, setSearch] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // YouTube / URL modal state
+  const [urlModalOpen, setUrlModalOpen] = useState(false);
+  const [inputUrl, setInputUrl] = useState('');
+  const [inputTitle, setInputTitle] = useState('');
+  const [submittingUrl, setSubmittingUrl] = useState(false);
+
+  const handleAddUrl = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = inputUrl.trim();
+    if (!trimmed) {
+      toast.error('URL wajib diisi');
+      return;
+    }
+
+    setSubmittingUrl(true);
+    try {
+      const res = await fetch('/api/media', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: trimmed,
+          title: inputTitle.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(isYouTubeUrl(trimmed) ? 'Video YouTube berhasil ditambahkan ke Library!' : 'Media URL berhasil ditambahkan!');
+        setInputUrl('');
+        setInputTitle('');
+        setUrlModalOpen(false);
+        await fetchMedia(data.media?.id);
+      } else {
+        toast.error(data.error || 'Gagal menambahkan media');
+      }
+    } catch {
+      toast.error('Terjadi kesalahan koneksi');
+    } finally {
+      setSubmittingUrl(false);
+    }
+  };
 
   useEffect(() => {
     fetchMedia();
@@ -137,8 +180,17 @@ export default function MediaLibraryAdminPage() {
           </p>
         </div>
 
-        {/* Upload Button */}
-        <div>
+        {/* Action Buttons */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setUrlModalOpen(true)}
+            className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs rounded-xl shadow-md shadow-red-500/20 flex items-center gap-2 transition-all cursor-pointer inline-flex"
+          >
+            <Film className="w-4 h-4" />
+            <span>+ Link YouTube / URL</span>
+          </button>
+
           <input
             type="file"
             id="media-page-upload"
@@ -224,7 +276,8 @@ export default function MediaLibraryAdminPage() {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {mediaList.map((m, idx) => {
-            const isVideo = isVideoUrl(m.url) || m.mimeType?.startsWith('video/');
+            const isYt = isYouTubeUrl(m.url) || m.mimeType === 'video/youtube';
+            const isVideo = isYt || isVideoUrl(m.url) || m.mimeType?.startsWith('video/');
             const isSelected = selectedId === m.id;
             return (
               <div
@@ -245,15 +298,28 @@ export default function MediaLibraryAdminPage() {
                 <div className="aspect-square bg-slate-900 relative overflow-hidden flex items-center justify-center">
                   {isVideo ? (
                     <div className="w-full h-full relative flex items-center justify-center bg-slate-950">
-                      <video
-                        src={m.url}
-                        className="w-full h-full object-cover opacity-80"
-                        muted
-                        playsInline
-                      />
-                      <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-black/70 text-white text-[10px] font-bold flex items-center gap-1 z-10">
-                        <Film className="w-3 h-3 text-amber-400" />
-                        <span>VIDEO</span>
+                      {isYt ? (
+                        <img
+                          src={getYouTubeThumbnail(m.url)}
+                          alt={m.originalName}
+                          className="w-full h-full object-cover opacity-90"
+                        />
+                      ) : (
+                        <video
+                          src={m.url}
+                          className="w-full h-full object-cover opacity-80"
+                          muted
+                          playsInline
+                          preload="metadata"
+                        />
+                      )}
+                      <div
+                        className={`absolute top-2 right-2 px-2 py-0.5 rounded-md text-white text-[10px] font-bold flex items-center gap-1 z-10 ${
+                          isYt ? 'bg-red-600' : 'bg-black/70'
+                        }`}
+                      >
+                        <Film className={`w-3 h-3 ${isYt ? 'text-white' : 'text-amber-400'}`} />
+                        <span>{isYt ? 'YOUTUBE' : 'VIDEO'}</span>
                       </div>
                       <div className="w-9 h-9 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center text-white">
                         <Play className="w-4 h-4 fill-white ml-0.5" />
@@ -310,13 +376,108 @@ export default function MediaLibraryAdminPage() {
                     {m.originalName}
                   </p>
                   <div className="flex items-center justify-between text-[11px] text-slate-400 mt-1">
-                    <span>{formatFileSize(m.size)}</span>
-                    <span>{m.mimeType.split('/')[1]?.toUpperCase()}</span>
+                    <span>{isYt ? 'YouTube' : formatFileSize(m.size)}</span>
+                    <span>{isYt ? 'VIDEO' : m.mimeType.split('/')[1]?.toUpperCase()}</span>
                   </div>
                 </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* YouTube / URL Modal */}
+      {urlModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-100 space-y-5">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
+                  <Film className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-slate-800 text-base">Tambah Link YouTube / URL</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setUrlModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddUrl} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Link Video YouTube / URL Media *
+                </label>
+                <input
+                  type="url"
+                  required
+                  placeholder="Contoh: https://www.youtube.com/watch?v=... atau https://youtu.be/..."
+                  value={inputUrl}
+                  onChange={(e) => setInputUrl(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-red-500 focus:outline-none"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Mendukung link video YouTube standar, YouTube Shorts, atau URL foto/video web.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Nama / Keterangan Media (Opsional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Contoh: Video Sapi Potong BUMDes Gambiran"
+                  value={inputTitle}
+                  onChange={(e) => setInputTitle(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-red-500 focus:outline-none"
+                />
+              </div>
+
+              {inputUrl && isYouTubeUrl(inputUrl) && (
+                <div className="rounded-xl border border-slate-100 p-3 bg-slate-50 space-y-2">
+                  <p className="text-[11px] font-semibold text-slate-500">Preview YouTube:</p>
+                  <div className="relative rounded-lg overflow-hidden aspect-video bg-black">
+                    <img
+                      src={getYouTubeThumbnail(inputUrl)}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                      <Play className="w-8 h-8 text-white fill-white drop-shadow" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                <button
+                  type="button"
+                  onClick={() => setUrlModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50 cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingUrl}
+                  className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold shadow-md shadow-red-500/20 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {submittingUrl ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Menyimpan...</span>
+                    </>
+                  ) : (
+                    <span>Simpan ke Library</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
